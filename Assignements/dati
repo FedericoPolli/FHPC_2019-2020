@@ -4,6 +4,7 @@ Laptop:
 	2 cores per CPU
 	FLOPS per cycle: 16 (Intel Kaby Lake architecture, https://en.wikipedia.org/wiki/FLOPS)
 	Theoretical Peak Performance:2*2.7*16*2=172.8 GFLOPS
+	Top 1 until november 1993 (https://en.wikipedia.org/wiki/Numerical_Wind_Tunnel_(Japan))
 
 Cell:
 	Sustained Peak Performance 1209 MFLOPS (Matrix size 2500)
