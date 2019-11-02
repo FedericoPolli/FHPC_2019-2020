@@ -1,3 +1,5 @@
+Section 0
+
 Laptop:
 	Model
 	2 CPU: Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz
@@ -13,3 +15,11 @@ Cell:
 	RAM: 4 Gb
 	1982 Cray X-MP 800 MFLOPS
 	1985 Cray-2 1.9 GFLOPS
+
+Section 1
+
+
+
+Section 2
+Pi.c time on N=10000000 is 0.5 sec
+
