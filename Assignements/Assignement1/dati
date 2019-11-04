@@ -2,8 +2,8 @@ Section 0
 
 Laptop:
 	Model
-	2 CPU: Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz
-	2 cores per CPU
+	CPU: Intel(R) Core(TM) i7-7500U @ 2.70GHz
+	2 cores
 	FLOPS per cycle: 16 (Intel Kaby Lake architecture, https://en.wikipedia.org/wiki/FLOPS)
 	Theoretical Peak Performance:2*2.7*16=86.4 GFLOPS
 	Top 1 until november 1993 (https://en.wikipedia.org/wiki/Numerical_Wind_Tunnel_(Japan))
@@ -17,9 +17,10 @@ Cell:
 	1985 Cray-2 1.9 GFLOPS
 
 Section 1
-
+	Modify scalability by sending partial sums to other processor, so to use more the other processors.
 
 
 Section 2
 Pi.c time on N=10000000 is 0.5 sec
-
+Mpi.C time on N=10000000 with 1 processor is 0.85 sec  --> parallel overhead caused by MPI is approx 0.35 sec
+Mpi.C time on N=10000000 with 2 processors is 0.65 sec
