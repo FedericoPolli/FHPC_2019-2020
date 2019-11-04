@@ -21,11 +21,12 @@ Section 1
 
 
 Section 2
-Pi.c time on N=10000000 is 0.5 sec
-Mpi.C time on N=10000000 with 1 processor is 0.85 sec  --> parallel overhead caused by MPI is approx 0.35 sec
-Mpi.C time on N=10000000 with 2 processors is 0.65 sec
+Pi.c time on N=10000000 is 0.48 sec
+Mpi.C time on N=10000000 with 1 processor is 0.9 sec  --> parallel overhead caused by MPI is approx 0.42 sec
+Mpi.C time on N=10000000 with 2 processors is 0.7 sec
 
 
 Consider the maximum of time of processors (should be the master)
 
-Parallel overhead: lowest time-largest time more or less
+Parallel overhead: lowest time-largest time more or less?
+Execute code without summing
