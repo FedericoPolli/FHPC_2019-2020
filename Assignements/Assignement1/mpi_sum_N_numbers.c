@@ -17,7 +17,7 @@ int main ( int argc , char *argv[ ] )
   // master process
   int master = 0;
   int tag = 123;
-  long long int number;
+  long long int input;
 
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
          
@@ -27,18 +27,23 @@ int main ( int argc , char *argv[ ] )
       exit(-1); 
     } 
 
-  fscanf(in_file, "%lld", &number );
+  fscanf(in_file, "%lld", &input );
   
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
 
-  unsigned long long int* array=(unsigned long long int*) calloc(number, sizeof(unsigned long long int));
-  unsigned long long int i;
-  long long int resto = number%numprocs;
-  for (i = 0; i < number; i++)
+  unsigned  int* array=(unsigned int*) calloc(input, sizeof(unsigned int));
+  if (array == NULL)
+    {
+      printf("Errore nell'allocazione della memoria");
+      MPI_Finalize();
+    }
+  unsigned int i;
+  unsigned int resto = input%numprocs;
+  for (i = 0; i < input; i++)
     array[i] = i + 1;
-  long long int N =number/numprocs;
+  unsigned int N =input/numprocs;
 // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
@@ -47,7 +52,7 @@ int main ( int argc , char *argv[ ] )
   }
 
   if (myid == master) { //if I am the master process gather results from others
-    for (i=number-resto; i < number; i++)
+    for (i=input-resto; i < input; i++)
       local_sum+=array[i];
     sum = local_sum ;
     printf ( "\n # partial sum on master processor: %lld \n", local_sum);
