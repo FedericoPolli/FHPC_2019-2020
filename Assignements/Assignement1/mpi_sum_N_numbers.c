@@ -32,8 +32,8 @@ int main ( int argc , char *argv[ ] )
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
-
-  unsigned  int* array=(unsigned int*) calloc(input, sizeof(unsigned int));
+  unsigned int N = input/numprocs;
+  unsigned  int* array=(unsigned int*) calloc(N, sizeof(unsigned int));
   if (array == NULL)
     {
       printf("Error allocating memory");
@@ -41,38 +41,37 @@ int main ( int argc , char *argv[ ] )
     }
   unsigned int i;
   unsigned int resto = input%numprocs;
-  for (i = 0; i < input; i++)
-    array[i] = i + 1;
-  unsigned int N = input/numprocs;
+  for (i = 0; i < N; i++)
+    array[i] =myid*N + i + 1;
   // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
   for (i=0; i<N ; i++) {
-    local_sum+=array[i+myid*N];
+    local_sum+=array[i];
   }
 
-  if (myid == master) { //if I am the master process gather results from others
-    for (i=input-resto; i < input; i++)
-      local_sum+=array[i];
-    sum = local_sum ;
-    printf ( "\n # partial sum on master processor: %lld \n", local_sum);
-    for (proc=1; proc<numprocs ; proc++) {
-      MPI_Recv(&local_sum,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
-
-      sum += local_sum ;
-    }
-    end_time=MPI_Wtime(); 
-    printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) ;
-
+  if (myid != master)
+    {
+    MPI_Ssend(&local_sum , 1 ,MPI_LONG_LONG, master , tag ,MPI_COMM_WORLD) ;
+    end_time=MPI_Wtime();
+    printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
+    printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );
   }
   else
     {  
-      MPI_Ssend(&local_sum , 1 ,MPI_LONG_LONG, master , tag ,MPI_COMM_WORLD) ;
-      end_time=MPI_Wtime();
-      printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
-      printf ( "\n # walltime on processor %i : %10.8f \n",myid, end_time - start_time ) ;
+      for (i=input-resto+1; i <= input; i++)
+	local_sum+=i;
+      sum = local_sum;
+      printf ( "\n # partial sum on master processor: %lld \n", local_sum);
+      for (proc=1; proc<numprocs ; proc++) {
+	MPI_Recv(&local_sum,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
+	sum += local_sum ;
+      }
+      end_time=MPI_Wtime(); 
+      printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) ;
+      printf( "\n");
+      printf ( "\n # total sum: %llu \n", sum);
+      printf("\n");
     }
-  MPI_Finalize() ; // let MPI finish up /
-  if (myid==master)
-    printf ( "\n # total sum: %llu \n", sum); 
+  MPI_Finalize() ; // let MPI finish up / 
 }

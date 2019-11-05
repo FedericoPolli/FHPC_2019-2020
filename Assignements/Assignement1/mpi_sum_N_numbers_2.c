@@ -36,19 +36,23 @@ int main ( int argc , char *argv[ ] )
 
   unsigned int* array=(unsigned  int*) calloc(input, sizeof(unsigned int));
   unsigned int i;
-  unsigned int resto = input%numprocs;
-  for (i = 0; i < input; i++)
-    array[i] = i + 1;
   unsigned int N = input/numprocs;
+  unsigned int resto = input%numprocs;
+  for (i = 0; i < N; i++)
+    array[i] =myid*N + i + 1;
 // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
   for (i=0; i<N ; i++) {
-    local_sum+=array[myid*N+i];
+    local_sum+=array[i];
   }
   if (myid==0)
     {
+      for (i=input-resto+1; i <= input; i++)
+	local_sum+=i;
+      end_time=MPI_Wtime();
       printf("\n # partial sum on master processor: %llu\n", local_sum);
+      printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) 
     }
   else
     {
@@ -60,8 +64,6 @@ int main ( int argc , char *argv[ ] )
   MPI_Finalize() ; // let MPI finish up /
   if (myid==master)
     {
-  for (i=input-resto; i < input; i++)
-      sum+=array[i];
   printf ( "\n # total sum: %llu \n", sum);
     }
 }
