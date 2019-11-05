@@ -58,8 +58,10 @@ int main ( int argc , char *argv[ ] )
   end_time=MPI_Wtime(); 
 
   MPI_Finalize() ; // let MPI finish up /
+  if (myid==master)
+    {
   for (i=input-resto; i < input; i++)
       sum+=array[i];
-  if (myid==master)
-  printf ( "\n # total sum: %llu \n", sum); 
+  printf ( "\n # total sum: %llu \n", sum);
+    }
 }
