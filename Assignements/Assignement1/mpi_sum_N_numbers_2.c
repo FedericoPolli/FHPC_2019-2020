@@ -18,6 +18,10 @@ int main ( int argc , char *argv[ ] )
   int master = 0;
   int tag = 123;
   unsigned long long int input;
+  
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
          
@@ -28,42 +32,38 @@ int main ( int argc , char *argv[ ] )
     } 
 
   fscanf(in_file, "%llu", &input );
+
   
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-
-
   unsigned int* array=(unsigned  int*) calloc(input, sizeof(unsigned int));
+  if (array == NULL)
+    {
+      printf("Error allocating memory");
+      MPI_Finalize();
+    }
+
   unsigned int i;
   unsigned int N = input/numprocs;
   unsigned int resto = input%numprocs;
+  
   for (i = 0; i < N; i++)
     array[i] =myid*N + i + 1;
-// take time of processors after initial I/O operation
-  start_time = MPI_Wtime();
+  
   local_sum=0;
   for (i=0; i<N ; i++) {
     local_sum+=array[i];
   }
-  if (myid==0)
+  if (myid!=master)
     {
-      for (i=input-resto+1; i <= input; i++)
-	local_sum+=i;
-      end_time=MPI_Wtime();
-      printf("\n # partial sum on master processor: %llu\n", local_sum);
-      printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) 
+      printf ("\n # partial sum on processor %d: %llu\n", myid, local_sum); 
     }
   else
     {
-      printf ("\n # partial sum on processor %d: %llu\n", myid, local_sum);
-	}
-  MPI_Reduce(&local_sum, &sum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  end_time=MPI_Wtime(); 
-
+      for (i=input-resto+1; i <= input; i++)
+	local_sum+=i;
+      printf("\n # partial sum on master processor: %llu\n", local_sum);
+    }
+  MPI_Reduce(&local_sum, &sum, 1, MPI_LONG_LONG_INT, MPI_SUM, master, MPI_COMM_WORLD);
   MPI_Finalize() ; // let MPI finish up /
   if (myid==master)
-    {
-  printf ( "\n # total sum: %llu \n", sum);
-    }
+      printf ( "\n # total sum: %llu \n", sum);
 }

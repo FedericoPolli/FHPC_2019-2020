@@ -9,7 +9,6 @@ int main ( int argc , char *argv[ ] )
 {
 
   unsigned long long int sum=0, local_sum ; 
-   
   double start_time, end_time;   
   int myid , numprocs , proc ;
   MPI_Status status;
@@ -18,6 +17,10 @@ int main ( int argc , char *argv[ ] )
   int master = 0;
   int tag = 123;
   unsigned long long int input;
+  
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
 
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
          
@@ -29,9 +32,6 @@ int main ( int argc , char *argv[ ] )
 
   fscanf(in_file, "%llu", &input );
   
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-  MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
   unsigned int N = input/numprocs;
   unsigned  int* array=(unsigned int*) calloc(N, sizeof(unsigned int));
   if (array == NULL)
@@ -46,17 +46,17 @@ int main ( int argc , char *argv[ ] )
   // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
-  for (i=0; i<N ; i++) {
+  
+  for (i=0; i<N ; i++) 
     local_sum+=array[i];
-  }
-
+ 
   if (myid != master)
     {
-    MPI_Ssend(&local_sum , 1 ,MPI_LONG_LONG, master , tag ,MPI_COMM_WORLD) ;
-    end_time=MPI_Wtime();
-    printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
-    printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );
-  }
+      MPI_Ssend(&local_sum, 1 ,MPI_LONG_LONG, master, tag ,MPI_COMM_WORLD) ;
+      end_time=MPI_Wtime();
+      printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
+      printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );
+    }
   else
     {  
       for (i=input-resto+1; i <= input; i++)
