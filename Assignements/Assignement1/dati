@@ -60,10 +60,10 @@ Mpi.C time on N=100000000 with 8 processors is 1.89 sec
 walltime on master processor is 0.27 sec
 
 Mpi.C time on N=100000000 with 16 processors is 1.89 sec
-walltime on master processor is 0.014 sec
+walltime on master processor is 0.14 sec
 
 Mpi.C time on N=100000000 with 20 processors is 1.97 sec
-walltime on master processor is 0.012 sec
+walltime on master processor is 0.12 sec
 
 
 
@@ -92,34 +92,38 @@ Parallel overhead:
 
 Consider the maximum of time of processors (should be the master)
 
-Parallel overhead: lowest time-largest time more or less?
-Execute code without summing
+Execute code without summing -> result is:
+1 proc 1.52 sec
+2 proc 1.53 sec
+4 proc 1.57 sec
+8 proc 1.62 sec
+12 proc 1.71 s
+16 proc 1.82 s
+20 proc 1.85 s
 
 Weak scaling:
 
-Constant N/proc=10000000
+Constant N/proc=500000000
 
-Mpi.C time on N=20000000 with 2 processors is 1.72 sec
-walltime on master processor is 0.2 sec
+Pi.c time is 0.98 sec
 
-Mpi.C time on N=40000000 with 4 processors is 1.75 sec
-walltime on master processor is 0.2 sec
+Mpi.C time with 2 processors is 2.52 sec
+walltime on master processor is 1.02 sec
 
-Mpi.C time on N=60000000 with 6 processors is 1.78 sec
-walltime on master processor is 0.21 sec
+Mpi.C time on with 4 processors is 2.56 sec
+walltime on master processor is 1.02 sec
 
-Mpi.C time on N=80000000 with 8 processors is 2.02 sec
-walltime on master processor is 0.29 sec
+Mpi.C time on with 8 processors is 2.71 sec
+walltime on master processor is 1.08 sec
 
-Mpi.C time on N=120000000 with 12 processors is 2.51 sec
-walltime on master processor is 0.47 sec
+Mpi.C time on with 12 processors is 2.85 sec
+walltime on master processor is 1.15 sec
 
-Mpi.C time on N=1000000000 with 16 processors is 2.49 sec
-walltime on master processor is 0.57 sec
+Mpi.C time on with 16 processors is 2.89 sec
+walltime on master processor is 1.15 sec
 
-Mpi.C time on N=1000000000 with 20 processors is 2.75 sec
-walltime on master processor is 0.73 sec
-
+Mpi.C time on with 20 processors is 2.94 sec
+walltime on master processor is 1.16 sec
 
 
 
@@ -127,68 +131,77 @@ walltime on master processor is 0.73 sec
 
 
 
-Section 4
+
+Section 4  (Da rifare una volta finito il codice)
 
 
 N=10.000.000
 
-time with 1 processors is 1.62 sec
-walltime on master processor is 0.03 sec
-
-time with 2 processors is 1.63 sec
-walltime on master processor is 0.015 sec
-
-time with 4 processors is 1.67 sec
-walltime on master processor is 0.03 sec
-
-time with 8 processors is 1.78 sec
-walltime on master processor is 0.04 sec
-
-time with 16 processors is 2. sec
+time with 1 processors is 1.55 sec
 walltime on master processor is 0.02 sec
+
+time with 2 processors is 1.55 sec
+walltime on master processor is 0.012 sec
+
+time with 4 processors is 1.57 sec
+walltime on master processor is 0.007 sec
+
+time with 8 processors is 1.62 sec
+walltime on master processor is 0.005 sec
+
+time with 16 processors is 1.83 sec
+walltime on master processor is 0.004 sec
+
+time with 20 processors is 1.84 sec
+walltime on master processor is 0.006 sec
 
 
 
 
 N=100.000.000
 
-time with 1 processors is 2.23 sec
-walltime on master processor is 0.3 sec
+time with 1 processors is 1.72 sec
+walltime on master processor is 0.23 sec
 
-time with 2 processors is 1.92 sec
-walltime on master processor is 0.16 sec
+time with 2 processors is 1.62 sec
+walltime on master processor is 0.12 sec
 
-time with 4 processors is 1.77 sec
-walltime on master processor is 0.075 sec
+time with 4 processors is 1.58 sec
+walltime on master processor is 0.06 sec
 
-time with 8 processors is 1.82 sec
-walltime on master processor is 0.05 sec
+time with 8 processors is 1.65 sec
+walltime on master processor is 0.03 sec
 
-time with 16 processors is 2.14 sec
-walltime on master processor is 0.1 sec
+time with 16 processors is 1.84 sec
+walltime on master processor is 0.02 sec
+
+time with 20 processors is 1.85 sec
+walltime on master processor is 0.02 sec
+ comm time 0.001
 
 
 N=1.000.000.000
 
-time with 1 processors is 7.04 sec
-walltime on master processor is 2.36 sec
+time with 1 processors is 3.88 sec
+walltime on master processor is 2.37 sec
 
-time with 2 processors is 4.40 sec
-walltime on master processor is 1.22 sec
+time with 2 processors is 2.75 sec
+walltime on master processor is 1.23 sec
 
-time with 4 processors is 2.95 sec
-walltime on master processor is 0.61 sec
+time with 4 processors is 2.17 sec
+walltime on master processor is 0.62 sec
 
-time with 8 processors is 2.39 sec
+time with 8 processors is 1.95 sec
 walltime on master processor is 0.33 sec
 
-time with 12 processors is 2.32 sec
-walltime on master processor is 0.25 sec
+time with 16 processors is 1.89 sec
+walltime on master processor is 0.18 sec
 
-time with 16 processors is 2.26 sec
-walltime on master processor is 0.19 sec
+time with 20 processors is 1.95 sec
+walltime on master processor is 0.14 sec
 
-time with 20 processors is 2.27 sec
-walltime on master processor is 0.17 sec
+
+
+reading time=0.0001, comm time=0.0001
 
 

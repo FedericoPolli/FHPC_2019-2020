@@ -33,25 +33,15 @@ int main ( int argc , char *argv[ ] )
 
   fscanf(in_file, "%llu", &input );
 
-  
-  unsigned int* array=(unsigned  int*) calloc(input, sizeof(unsigned int));
-  if (array == NULL)
-    {
-      printf("Error allocating memory");
-      MPI_Finalize();
-    }
-
   unsigned int i;
   unsigned int N = input/numprocs;
   unsigned int resto = input%numprocs;
+  start_time = MPI_Wtime();
+  local_sum=0;
   
   for (i = 0; i < N; i++)
-    array[i] =myid*N + i + 1;
-  
-  local_sum=0;
-  for (i=0; i<N ; i++) {
-    local_sum+=array[i];
-  }
+    local_sum+=myid*N + i + 1;
+
   if (myid!=master)
     {
       printf ("\n # partial sum on processor %d: %llu\n", myid, local_sum); 
@@ -63,7 +53,13 @@ int main ( int argc , char *argv[ ] )
       printf("\n # partial sum on master processor: %llu\n", local_sum);
     }
   MPI_Reduce(&local_sum, &sum, 1, MPI_LONG_LONG_INT, MPI_SUM, master, MPI_COMM_WORLD);
+  end_time=MPI_Wtime();
+  if (myid==master){
+     printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) ;
+    printf ( "\n # total sum: %llu \n", sum);
+  }
+  else {
+    printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );}
   MPI_Finalize() ; // let MPI finish up /
-  if (myid==master)
-      printf ( "\n # total sum: %llu \n", sum);
+
 }

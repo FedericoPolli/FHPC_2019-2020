@@ -9,7 +9,9 @@ int main ( int argc , char *argv[ ] )
 {
 
   unsigned long long int sum=0, local_sum ; 
-  double start_time, end_time;   
+  double start_time, end_time;
+  double start_time_read, end_time_read;
+  double start_time_comm, end_time_comm;
   int myid , numprocs , proc ;
   MPI_Status status;
   MPI_Request request;
@@ -23,7 +25,8 @@ int main ( int argc , char *argv[ ] )
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
 
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
-         
+
+  start_time_read = MPI_Wtime();
   if (! in_file )
     {  
       printf("Error reading file\n"); 
@@ -31,29 +34,26 @@ int main ( int argc , char *argv[ ] )
     } 
 
   fscanf(in_file, "%llu", &input );
-  
+  end_time_read = MPI_Wtime();
+  printf ( "\n # reading time for processor %i : %10.8f \n\n",myid, end_time_read - start_time_read );
+
   unsigned int N = input/numprocs;
-  unsigned  int* array=(unsigned int*) calloc(N, sizeof(unsigned int));
-  if (array == NULL)
-    {
-      printf("Error allocating memory");
-      MPI_Finalize();
-    }
   unsigned int i;
   unsigned int resto = input%numprocs;
-  for (i = 0; i < N; i++)
-    array[i] =myid*N + i + 1;
   // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
-  
-  for (i=0; i<N ; i++) 
-    local_sum+=array[i];
+  for (i = 0; i < N; i++)
+    local_sum += myid*N + i + 1;
  
   if (myid != master)
     {
+      start_time_comm = MPI_Wtime();
       MPI_Ssend(&local_sum, 1 ,MPI_LONG_LONG, master, tag ,MPI_COMM_WORLD) ;
+      end_time_comm=MPI_Wtime();
       end_time=MPI_Wtime();
+      printf ( "\n # communication time for processor %i : %10.8f \n\n",myid, end_time_comm - start_time_comm );
+
       printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
       printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );
     }
@@ -69,9 +69,7 @@ int main ( int argc , char *argv[ ] )
       }
       end_time=MPI_Wtime(); 
       printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) ;
-      printf( "\n");
       printf ( "\n # total sum: %llu \n", sum);
-      printf("\n");
     }
   MPI_Finalize() ; // let MPI finish up / 
 }
