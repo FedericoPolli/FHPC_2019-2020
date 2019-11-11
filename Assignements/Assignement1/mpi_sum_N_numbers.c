@@ -24,6 +24,8 @@ int main ( int argc , char *argv[ ] )
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);;
 
+  //read input from file for each processor
+  
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
 
   start_time_read = MPI_Wtime();
@@ -34,39 +36,49 @@ int main ( int argc , char *argv[ ] )
     } 
 
   fscanf(in_file, "%llu", &input );
-  end_time_read = MPI_Wtime();
+  
+  end_time_read = MPI_Wtime();  //calculate reading time
+  
   printf ( "\n # reading time for processor %i : %10.8f \n\n",myid, end_time_read - start_time_read );
 
   unsigned int N = input/numprocs;
   unsigned int i;
   unsigned int resto = input%numprocs;
+  
   // take time of processors after initial I/O operation
   start_time = MPI_Wtime();
   local_sum=0;
+  //each processor calculates sum of only input/numprocs numbers
   for (i = 0; i < N; i++)
     local_sum += myid*N + i + 1;
  
   if (myid != master)
     {
+      //gets communication time
       start_time_comm = MPI_Wtime();
       MPI_Ssend(&local_sum, 1 ,MPI_LONG_LONG, master, tag ,MPI_COMM_WORLD) ;
       end_time_comm=MPI_Wtime();
-      end_time=MPI_Wtime();
+      
+      end_time=MPI_Wtime();  //calculates walltime for each processor
+      
       printf ( "\n # communication time for processor %i : %10.8f \n\n",myid, end_time_comm - start_time_comm );
-
       printf ( "\n # partial sum on processor %i: %llu \n", myid, local_sum);
       printf ( "\n # walltime on processor %i : %10.8f \n\n",myid, end_time - start_time );
     }
   else
-    {  
+    {
+      //the master processor sums the remaining numbers if input is not a multiple of numproc
       for (i=input-resto+1; i <= input; i++)
 	local_sum+=i;
       sum = local_sum;
       printf ( "\n # partial sum on master processor: %lld \n", local_sum);
+
+      //receive partial sums from slaves
       for (proc=1; proc<numprocs ; proc++) {
 	MPI_Recv(&local_sum,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
 	sum += local_sum ;
       }
+      //calculates walltime of master processor
       end_time=MPI_Wtime(); 
       printf ( "\n # walltime on master processor : %10.8f \n", end_time - start_time ) ;
       printf ( "\n # total sum: %llu \n", sum);

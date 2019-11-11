@@ -23,6 +23,7 @@ int main ( int argc , char *argv[ ] )
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 
+  //each processor reads input from file
   FILE* in_file = fopen("input_parallel_sum.txt", "r"); 
          
   if (! in_file )
@@ -36,9 +37,10 @@ int main ( int argc , char *argv[ ] )
   unsigned int i;
   unsigned int N = input/numprocs;
   unsigned int resto = input%numprocs;
+  
   start_time = MPI_Wtime();
   local_sum=0;
-  
+  //each processor computes a partial sum
   for (i = 0; i < N; i++)
     local_sum+=myid*N + i + 1;
 
@@ -48,10 +50,12 @@ int main ( int argc , char *argv[ ] )
     }
   else
     {
+      //master takes care of remaining numbers should numproc not divide input
       for (i=input-resto+1; i <= input; i++)
 	local_sum+=i;
       printf("\n # partial sum on master processor: %llu\n", local_sum);
     }
+  //computes total sum
   MPI_Reduce(&local_sum, &sum, 1, MPI_LONG_LONG_INT, MPI_SUM, master, MPI_COMM_WORLD);
   end_time=MPI_Wtime();
   if (myid==master){

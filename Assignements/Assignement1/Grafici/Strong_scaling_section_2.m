@@ -27,14 +27,14 @@ elapsed_time_n3=[19.54, 11.74, 6.66, 4.31, 3.20, 2.96];
 walltimes_n3=[19.54, 10.2, 5.12, 2.71, 1.45, 1.15];
 walltime_speedup_n3=serial_time_n_3./walltimes_n3;
 elapsed_speedup_n3=serial_time_n_3./elapsed_time_n3;
-scatter(num_procs, elapsed_time_n3, 'r', 'filled')
+scatter(num_procs, elapsed_speedup_n3, 'r', 'filled')
 hold on
-scatter(num_procs, walltimes_n3, 'b', 'filled')
+scatter(num_procs, walltime_speedup_n3, 'b', 'filled')
 
 
 
 grid on
-title('Runtime of MPI pi.c')
+title('Strong scaling of MPI pi.c for N=1.000.000.000')
 xlabel('Number of Processors')
-ylabel('Runtime')
+ylabel('Speedup')
 legend({'Elapsed Time', 'Walltime'}, 'Location','northeast')
