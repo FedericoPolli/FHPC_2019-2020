@@ -1,12 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 #include <omp.h>
-
-
-#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
-		  (double)ts.tv_nsec * 1e-9)
 
 
 int mybsearch(int *data, int M, int N, int Key)
@@ -31,8 +27,8 @@ int mybsearch(int *data, int M, int N, int Key)
   return -1;
 }
 
-#define N_DEFAULT  (1024*1024*128)
-#define N_search_DEFAULT (N_DEFAULT / 10)
+#define N_DEFAULT  (100000000)
+#define N_search_DEFAULT (N_DEFAULT / 5)
 
 int main(int argc, char **argv)
 {
@@ -55,8 +51,6 @@ int main(int argc, char **argv)
 
 #if !defined(_OPENMP)
 
-  double tstart, tstop;
-  struct timespec ts;
   printf("performing %d lookups on %d data..\n", Nsearch, N);
 
   printf("set-up data.."); fflush(stdout);
@@ -71,12 +65,11 @@ int main(int argc, char **argv)
     search[i] = rand() % N;
 
   printf("\nstart cycle.. "); fflush(stdout);
-  tstart = CPU_TIME;
     
   for (i = 0; i < Nsearch; i++)
     if( mybsearch(data, 0, N, search[i]) >= 0)
       found++;
-
+  
 #else
 
 #pragma omp parallel
@@ -86,35 +79,28 @@ int main(int argc, char **argv)
       nthreads = omp_get_num_threads();
       r=N%nthreads;
       tot=N+r;
+      printf("performing %d lookups on %d data..\n", Nsearch, N);
+      printf("number of threads %d \n", nthreads);
       search = malloc(Nsearch * sizeof(int));
       srand(time(NULL));
       data = malloc(tot * sizeof(int));
-      /* for (i = 0; i < Nsearch; i++) */
-      /* 	search[i] = rand() % N;  */
+      for (i = 0; i < Nsearch; i++)
+  	search[i] = rand() % N;
 
-      /* for (i = 0; i < tot; i++) */
-      /* 	data[i] = i; */
-      printf("performing %d lookups on %d data..\n", Nsearch, N);
-      printf("number of threads %d \n", nthreads);
+      for (i = 0; i < tot; i++)
+  	data[i] = i;
     }
-
-    #pragma omp barrier
-    
     int my_thread_id = omp_get_thread_num();
-    
-#pragma omp parallel for
-    for (i = 0; i < Nsearch; i++)
-      search[i] = rand() % N;
 
-#pragma omp parallel for
-    for (i = 0; i < tot; i++)
-      data[i] = i;
-    
+#pragma omp barrier
+
+      
 #pragma omp parallel for schedule(dynamic)
+    
     for (i = 0; i < Nsearch; i++)
-      if( mybsearch(data, my_thread_id*tot/nthreads, (my_thread_id+1)*tot/nthreads-1, search[i]) >= 0)
+      if( mybsearch(data, my_thread_id*tot/nthreads, (my_thread_id+1)*tot/nthreads-1, search[i]) >= 0)	      
 #pragma omp atomic
-	found++;
+	found++;  
   }
 #endif
   
