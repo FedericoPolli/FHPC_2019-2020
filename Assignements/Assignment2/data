@@ -23,4 +23,15 @@ serial 12.38 sec
 16 threads 1.21
 20 threads 1.12
 
+search length 20000000
+data length 100000000
 
+binary search times:
+serial 8.70
+1 thread 9.10
+2 threads 7.49
+4 threads 4.89
+8 threads 3.82
+12 threads 3.61
+16 threads 3.30
+20 threads 3.15
