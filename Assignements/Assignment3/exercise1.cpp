@@ -3,7 +3,6 @@
 
 double check_bounded(const double c_x, const double c_y, const int I_max);
 void write_pgm_image( void *image, int maxval, int xsize, int ysize, const char *image_name);
-void write_ppm_image( void *image, int maxval, int xsize, int ysize, const char *image_name);
  
 
 int main(int argc, char* argv[]) {
@@ -52,7 +51,7 @@ int main(int argc, char* argv[]) {
   }
   else {
     Matrix_65535.resize(n_x*n_y);
-    #pragma omp parallel for private(c_x, c_y)
+#pragma omp parallel for private(c_x, c_y) schedule(dynamic)
     for (std::size_t j=0; j<n_y; ++j)
       {
 	c_y=y_L+j*delta_y;
@@ -62,7 +61,7 @@ int main(int argc, char* argv[]) {
 	    Matrix_65535[k+j*n_x]=check_bounded(c_x, c_y, I_max);
 	  }
       }
-     write_ppm_image(Matrix_65535.data(), I_max, n_x, n_y, "image.ppm" );
+     write_pgm_image(Matrix_65535.data(), I_max, n_x, n_y, "image.pgm" );
   }
 }
 
@@ -131,50 +130,4 @@ void write_pgm_image( void *image, int maxval, int xsize, int ysize, const char 
   
      ------------------------------------------------------------------ */
 }
-
-
-void write_ppm_image( void *image, int maxval, int xsize, int ysize, const char *image_name)
-{
-  FILE* image_file; 
-  image_file = fopen(image_name, "w"); 
-  
-  // Writing header
-  // The header's format is as follows, all in ASCII.
-  // "whitespace" is either a blank or a TAB or a CF or a LF
-  // - The Magic Number (see below the magic numbers)
-  // - the image's width
-  // - the height
-  // - a white space
-  // - the image's height
-  // - a whitespace
-  // - the maximum color value, which must be between 0 and 65535
-  //
-  // if he maximum color value is in the range [0-255], then
-  // a pixel will be expressed by a single byte; if the maximum is
-  // larger than 255, then 2 bytes will be needed for each pixel
-  //
-
-  int color_depth = 1+((maxval>>8)>0);       // 1 if maxval < 256, 2 otherwise
-
-  fprintf(image_file, "P6\n%d %d\n%d\n", xsize, ysize, maxval);
-  
-  // Writing file
-  fwrite( image, color_depth, xsize*ysize, image_file);  
-
-  fclose(image_file); 
-  return ;
-
-  /* ---------------------------------------------------------------
-
-     TYPE    MAGIC NUM     EXTENSION   COLOR RANGE
-     ASCII  BINARY
-
-     PBM   P1     P4       .pbm        [0-1]
-     PGM   P2     P5       .pgm        [0-255]
-     PPM   P3     P6       .ppm        [0-2^16[
-  
-     ------------------------------------------------------------------ */
-}
-
-
 
