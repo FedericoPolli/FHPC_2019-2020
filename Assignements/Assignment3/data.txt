@@ -1,0 +1,99 @@
+STRONG SCALING
+
+Iterations=255
+pixels 20000x20000
+-1.5 -1.5 1.5 1.5
+
+TIMES
+
+serial: 64.5
+1 thread: 65.9
+2 threads: 33.8
+4 threads: 17.9
+8 threads: 9.9
+16 threads: 5.76
+20 threads: 5.09
+
+AVG THREAD TIMES
+
+1 thread 63.5
+2 threads: 32.1
+4 threads: 16.5
+8 threads: 8.7
+16 threads: 4.6
+20 threads: 3.7
+
+--------------------------------------------------
+
+Iterations=65535
+pixels 2000x2000
+-1.5 -1.5 1.5 1.5
+
+TIMES
+
+serial: 119.35
+2 threads: 60
+4 threads: 30.8
+8 threads: 16.36
+16 threads: 8.67
+20 threads: 7.32
+
+AVG THREAD TIMES
+
+2 threads: 60
+4 threads: 30.8
+8 threads: 16.35
+16 threads: 8.65
+20 threads: 6.92
+
+---------------------------------------------------
+
+WEAK SCALING
+
+Iteration=255
+-1.5 -1.5 1.5 1.5
+Problem size 100.000.000 pixels
+
+TIMES
+
+1 thread: 16.35
+2 threads: 16.67
+4 threads: 18.48
+8 threads: 19.98
+16 threads: 25.41
+20 threads: 27.76
+
+
+AVG THREAD TIMES
+
+1 thread: 15.87
+2 threads: 15.97
+4 threads: 16.43
+8 threads: 17.4
+16 threads: 18.42
+20 threads: 18.42
+
+-----------------------------------------------------
+
+Iterations=65535
+-1.5 -1.5 1.5 1.5
+Problem size 500.000 pixels
+
+TIMES
+
+1 thread: 15.68
+2 threads: 14.98
+4 threads: 15.45
+8 threads: 16.34
+16 threads: 17.33
+20 threads: 17.97
+
+
+AVG THREAD TIMES
+
+1 thread: 14.92
+2 threads: 14.98
+4 threads: 15.45
+8 threads: 16.35
+16 threads: 17.30
+20 threads: 17.3

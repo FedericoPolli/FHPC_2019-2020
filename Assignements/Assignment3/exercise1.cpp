@@ -3,6 +3,7 @@
 #include <time.h>
 #include <omp.h>
 #include <exception>
+#include <cmath>
 
 #if defined(_OPENMP)
 #define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec + \
@@ -49,8 +50,8 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  if (I_max>=65536) {
-    std::cout << "The number of iterations is too big.\n" << "It should be less than 65536.\n";
+  if (I_max != 65535 && I_max !=255 ) {
+    std::cout << "Wrong number of iterations: it should be either 255 or 65535.\n\n";
     return 0;
   }
 
@@ -58,32 +59,31 @@ int main(int argc, char* argv[]) {
   double delta_x=(x_R-x_L)/(double)n_x;
   double delta_y=(y_R-y_L)/(double)n_y;
   
-  std::vector<char> Matrix_256;
-  std::vector<short int> Matrix_65536;
-
-  
-#if defined(_OPENMP)
+  std::vector<char> Matrix_255;
+  std::vector<short int> Matrix_65535;
   
   int nthreads=1;
   double avg_time=0;
   double min_time=1e11;
   
-
   // Distinguishes two cases depending on the number of iterations, which determines what vector to use.
-
   
-  if (I_max<256)
+  if (I_max==255)
     {
-      Matrix_256.resize(n_x*n_y);
-    
-#pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time)
+      Matrix_255.resize(n_x*n_y);
+
+#pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time) 
       {
+	
+#if defined(_OPENMP)    
 #pragma omp single nowait
 	nthreads=omp_get_num_threads();
 	
 	struct timespec myts;
 	double mystart=CPU_TIME_th;
-       
+#endif
+
+	
 #pragma omp for schedule(dynamic)
 	for (std::size_t j=0; j<n_y; ++j)
 	  {
@@ -91,110 +91,102 @@ int main(int argc, char* argv[]) {
 	    for (std::size_t k=0; k<n_x; ++k)
 	      {
 		c_x=x_L+k*delta_x;	  
-		Matrix_256[k+j*n_x]=check_bounded(c_x, c_y, I_max);
+		Matrix_255[k+j*n_x]=check_bounded(c_x, c_y, I_max);
 	      }
 	  }
-      
+	
+#if defined(_OPENMP)
 	avg_time += CPU_TIME_th-mystart;
 	min_time = CPU_TIME_th-mystart;
+#endif
       }
-    
-      write_pgm_image(Matrix_256.data(), I_max, n_x, n_y, "image.pgm" );
+      write_pgm_image(Matrix_255.data(), I_max, n_x, n_y, "image.pgm" );
     }
   
-  else {
-    Matrix_65536.resize(n_x*n_y);
-    
-#pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time)
-    {
-      
-#pragma omp single nowait
-      nthreads=omp_get_num_threads();
-      
-      struct timespec myts;
-      double mystart=CPU_TIME_th;
-
-#pragma omp for schedule(dynamic)
-      for (std::size_t j=0; j<n_y; ++j)
-	{
-	  c_y=y_L+j*delta_y;
-	  for (std::size_t k=0; k<n_x; ++k)
-	    {
-	      c_x=x_L+k*delta_x;	  
-	      Matrix_65536[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	    }
-	}
-      
-      avg_time += CPU_TIME_th-mystart;
-      min_time = CPU_TIME_th-mystart;
-    }
-    
-    write_pgm_image(Matrix_65536.data(), I_max, n_x, n_y, "image.pgm" );
-  }
-
-  std::cout << "Average thread time " << avg_time/nthreads << std::endl;
-  std::cout << "Minimum thread time " << min_time << std::endl;
-
-#else
-
-  if (I_max<256)
-    {
-      Matrix_256.resize(n_x*n_y);
-      for (std::size_t j=0; j<n_y; ++j)
-	{
-	  c_y=y_L+j*delta_y;
-	  for (std::size_t k=0; k<n_x; ++k)
-	    {
-	      c_x=x_L+k*delta_x;	  
-	      Matrix_256[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	    }
-	}    
-      write_pgm_image(Matrix_256.data(), I_max, n_x, n_y, "image.pgm" );
-    }
   else
     {
-      Matrix_65536.resize(n_x*n_y);
-      for (std::size_t j=0; j<n_y; ++j)
-	{
-	  c_y=y_L+j*delta_y;
-	  for (std::size_t k=0; k<n_x; ++k)
-	    {
-	      c_x=x_L+k*delta_x;	  
-	      Matrix_65536[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	    }
-	}    
-      write_pgm_image(Matrix_65536.data(), I_max, n_x, n_y, "image.pgm" );
+      Matrix_65535.resize(n_x*n_y);
+    
+#pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time)
+      {
+      
+#if defined(_OPENMP)       
+#pragma omp single nowait
+	nthreads=omp_get_num_threads();
+	
+	struct timespec myts;
+	double mystart=CPU_TIME_th;
+#endif
+
+      
+#pragma omp for schedule(dynamic)
+	for (std::size_t j=0; j<n_y; ++j)
+	  {
+	    c_y=y_L+j*delta_y;
+	    for (std::size_t k=0; k<n_x; ++k)
+	      {
+		c_x=x_L+k*delta_x;	  
+		Matrix_65535[k+j*n_x]=check_bounded(c_x, c_y, I_max);
+	      }
+	  }
+
+#if defined(_OPENMP)
+	avg_time += CPU_TIME_th-mystart;
+	min_time = CPU_TIME_th-mystart;
+#endif      
+      }
+      write_pgm_image(Matrix_65535.data(), I_max, n_x, n_y, "image.pgm" );
     }
 
-#endif
+#if defined(_OPENMP)
+  std::cout << "Average thread time " << avg_time/nthreads << std::endl;
+  std::cout << "Minimum thread time " << min_time << std::endl;
+#endif 
+
 }
-
-
 
 
 double check_bounded(const double c_x, const double c_y, const int I_max)
 {
   /*------------------------------------------------------------------------------------------
+    
     Takes as input the number of iterations and the starting point c=c_1=c_x+i*c_y.
-    In every iteration it first checks whether |c_n|>2, and if not calculates c_(n+1)=(c_n)^2+c. 
-    It either returns 0 if the point belongs to the Mandelbrot set 
-    or the iteration at which the norm became greater than 2.                                 
+
+    Taking into account the fact that the Mandelbrot set has two well defined subregions, a 
+    cardioid on the right and a disk on the left, the function first checks if the given point
+    belongs to eiher the former or the latter, to avoid unnecessary computations when 
+    calculating the whole set (gains 2x-3x speedup). Those checks should be commented out if 
+    trying to zoom in the frontier.
+ 
+    Then in every iteration it first checks whether |c_n|>2, and if not calculates 
+    c_(n+1)=(c_n)^2+c. It either returns 0 if the point belongs to the Mandelbrot set 
+    or the iteration at which the norm became greater than 2.    
+                             
     ------------------------------------------------------------------------------------------*/
+
+  
+  if (sqrt((c_x+0.25)*(c_x+0.25)+c_y*c_y)<0.5)  // Considering the cardioid on the right, the biggest disk
+    return 0;                                   // contained in it is centered in (-0.25, 0) with radius 0.5
+  
+  if (sqrt((c_x+1)*(c_x+1)+c_y*c_y)<0.25)      // The left disk is centered in (-1, 0) with radius 0.25
+    return 0;
   
   double x_temp=c_x;
   double y_temp=c_y;
   double mul_x=0;
   double mul_y=0;
-  for (std::size_t j=1; j<=I_max; ++j)
+  std::size_t j=1;
+
+  for (j=1; j<=I_max; ++j)
     {
       if ((x_temp*x_temp+y_temp*y_temp)>2)  
-	return j;
+	return I_max-j;
       mul_x=(x_temp*x_temp)-(y_temp*y_temp);
       mul_y=x_temp*y_temp+x_temp*y_temp;
       x_temp=mul_x+c_x;
       y_temp=mul_y+c_y;
     }
-  return 0;
+  return I_max-(j-1);   
 }
 
 
