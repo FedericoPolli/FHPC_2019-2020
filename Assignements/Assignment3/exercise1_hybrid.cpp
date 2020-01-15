@@ -4,6 +4,8 @@
 #include <omp.h>
 #include <exception>
 #include <cmath>
+#include <mpi.h>
+#define USE MPI
 
 #if defined(_OPENMP)
 #define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec + \
@@ -22,6 +24,21 @@ int main(int argc, char* argv[]) {
   double x_L=0.0, y_L=0.0, x_R=0.0, y_R=0.0;
   int I_max=0;
 
+  int myid, numproc, proc, mpi_provided_thread_level;
+  int master=0;
+
+  MPI_Init_thread( &argc, &argv, MPI_THREAD_FUNNELED, &mpi_provided_thread_level);
+  if ( mpi_provided_thread_level < MPI_THREAD_FUNNELED ) {
+    printf("a problem arise when asking for MPI_THREAD_FUNNELED level\n");
+    MPI_Finalize();
+    exit( 1 );
+  }
+
+  MPI_Status status;
+  MPI_Comm_size(MPI_COMM_WORLD,&numproc);
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+
+  
   // Verify that the correct amount of command line arguments were given
   // and that all variables have their appropriate type.
   
@@ -36,22 +53,33 @@ int main(int argc, char* argv[]) {
       I_max=std::stoi(argv[7]);
     }
     catch(...) {
-      std::cout << "An exception occured, there was probably a typing error.\n\n";
-      std::cout << "Terminating...\n\n";
+      if (myid==0)
+	{
+	  std::cout << "An exception occured, there was probably a typing error.\n\n";
+	  std::cout << "Terminating...\n\n";
+	}
+      MPI_Finalize();
       return 0;
     }
   }
-  else {
-    std::cout << "Not enough arguments were given.\n\n";
-    std::cout << "Input should be n_x, n_y, x_L, y_L, x_R, y_R, I_max, where:\n\n";
-    std::cout << "n_x, n_y are the dimensions of the grid of pixels \n\n";
-    std::cout << "x_L, y_L, x_R, y_R are the coordinates of the bottom left and top right points \n\n";
-    std::cout << "I_max is the number of iterations (less than 65536).\n\n";
-    return 0;
+  else
+    {
+      if (myid==0)
+	{
+	  std::cout << "Not enough arguments were given.\n\n";
+	  std::cout << "Input should be:\n\n";
+	  std::cout << "mpirun -np n ./exe n_x, n_y, x_L, y_L, x_R, y_R, I_max, where:\n\n";
+	  std::cout << "n_x, n_y are the dimensions of the grid of pixels \n\n";
+	  std::cout << "x_L, y_L, x_R, y_R are the coordinates of the bottom left and top right points \n\n";
+	  std::cout << "I_max is the number of iterations (either 255 or 65535).\n\n";
+	}
+      MPI_Finalize();
+      return 0;
   }
 
   if (I_max != 65535 && I_max !=255 ) {
-    std::cout << "Wrong number of iterations: it should be either 255 or 65535.\n\n";
+    if (myid==0) std::cout << "Wrong number of iterations: it should be either 255 or 65535.\n\n";
+    MPI_Finalize();
     return 0;
   }
 
@@ -65,54 +93,88 @@ int main(int argc, char* argv[]) {
   int nthreads=1;
   double avg_time=0;
   double min_time=1e11;
+
+  
+#if defined(_OPENMP)
+  omp_set_dynamic(0);
+      
+#pragma omp parallel
+  {
+#pragma omp single
+    nthreads=omp_get_num_threads()/numproc;
+  } 
+  omp_set_num_threads(nthreads);
+#endif
+
   
   // Distinguishes two cases depending on the number of iterations, which determines what vector to use.
   
   if (I_max==255)
     {
-      Matrix_255.resize(n_x*n_y);
+      Matrix_255.resize(n_x*n_y/numproc);
 
 #pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time) 
       {
 	
 #if defined(_OPENMP)    
 #pragma omp single nowait
-	nthreads=omp_get_num_threads();
-	
+	{
+	std::cout << "Running " << nthreads << " threads in process " << myid << std::endl;
+      }
 	struct timespec myts;
 	double mystart=CPU_TIME_th;
 #endif
 
 	
 #pragma omp for schedule(dynamic)
-	for (std::size_t j=0; j<n_y; ++j)
+	for (std::size_t j=myid*n_x*n_y/numproc; j<(myid+1)*n_x*n_y/numproc; ++j)
 	  {
-	    c_y=y_L+j*delta_y;
-	    for (std::size_t k=0; k<n_x; ++k)
-	      {
-		c_x=x_L+k*delta_x;	  
-		Matrix_255[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	      }
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_255[j-myid*n_x*n_y/numproc]=check_bounded(c_x, c_y, I_max);	      
 	  }
+
 	
 #if defined(_OPENMP)
 	avg_time += CPU_TIME_th-mystart;
 	min_time = CPU_TIME_th-mystart;
 #endif
       }
-      write_pgm_image(Matrix_255.data(), I_max, n_x, n_y, "image.pgm" );
+      
+      if (myid==0)
+	{
+	  std::vector<char> Matrix_255_global;
+	  Matrix_255_global.insert(Matrix_255_global.end(), Matrix_255.begin(), Matrix_255.end());
+	  for (proc=1; proc<numproc; proc++)
+	    {
+	      char *data=new char[n_x*n_y/numproc];
+	      MPI_Recv(data, n_x*n_y/numproc, MPI_BYTE, proc, 1, MPI_COMM_WORLD, &status);
+	      Matrix_255_global.insert(Matrix_255_global.end(), data, data+n_x*n_y/numproc-1);
+	      free(data);
+	    }
+	  write_pgm_image(Matrix_255_global.data(), I_max, n_x, n_y, "image.pgm" );
+	}
+      else
+	{
+	  char* data=Matrix_255.data();
+	  MPI_Ssend(data, n_x*n_y/numproc, MPI_BYTE, 0, 1, MPI_COMM_WORLD);
+	}
     }
+
+  /* Second case: ------------------------------------------------------------------------------- */
   
   else
     {
-      Matrix_65535.resize(n_x*n_y);
+      Matrix_65535.resize(n_x*n_y/numproc);
     
 #pragma omp parallel private(c_x, c_y) reduction (+:avg_time) reduction (min:min_time)
       {
       
 #if defined(_OPENMP)       
 #pragma omp single nowait
-	nthreads=omp_get_num_threads();
+	{
+	std::cout << "Running " << nthreads << " threads in process " << myid << std::endl;
+	}
 	
 	struct timespec myts;
 	double mystart=CPU_TIME_th;
@@ -120,29 +182,59 @@ int main(int argc, char* argv[]) {
 
       
 #pragma omp for schedule(dynamic)
-	for (std::size_t j=0; j<n_y; ++j)
+	for (std::size_t j=myid*n_x*n_y/numproc; j<(myid+1)*n_x*n_y/numproc; ++j)
 	  {
-	    c_y=y_L+j*delta_y;
-	    for (std::size_t k=0; k<n_x; ++k)
-	      {
-		c_x=x_L+k*delta_x;	  
-		Matrix_65535[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	      }
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_65535[j-myid*n_x*n_y/numproc]=check_bounded(c_x, c_y, I_max);	      
 	  }
-
+	
 #if defined(_OPENMP)
 	avg_time += CPU_TIME_th-mystart;
 	min_time = CPU_TIME_th-mystart;
 #endif      
       }
-      write_pgm_image(Matrix_65535.data(), I_max, n_x, n_y, "image.pgm" );
+      if (myid==0)
+	{
+	  std::vector<short int> Matrix_65535_global;
+	  Matrix_65535_global.insert(Matrix_65535_global.end(), Matrix_65535.begin(), Matrix_65535.end());
+	  for (proc=1; proc<numproc; proc++)
+	    {
+	      short int *data=new short int[n_x*n_y/numproc];
+	      MPI_Recv(data, n_x*n_y/numproc, MPI_SHORT, proc, 1, MPI_COMM_WORLD, &status);
+	      Matrix_65535_global.insert(Matrix_65535_global.end(), data, data+n_x*n_y/numproc-1);
+	      free(data);
+	    }
+	  write_pgm_image(Matrix_65535_global.data(), I_max, n_x, n_y, "image.pgm" );
+	}
+      else
+	{
+	  short int* data=Matrix_65535.data();
+	  MPI_Ssend(data, n_x*n_y/numproc, MPI_SHORT, 0, 1, MPI_COMM_WORLD);
+	}
     }
 
 #if defined(_OPENMP)
-  std::cout << "Average thread time " << avg_time/nthreads << std::endl;
-  std::cout << "Minimum thread time " << min_time << std::endl;
+  
+  std::cout << std::endl;
+  std::cout << "Average thread time for process " << myid << ": " << avg_time/nthreads << std::endl;
+  std::cout << "Minimum thread time for process " << myid << ": " << min_time << std::endl;
+  
+  double global_avg_time, global_min_time;
+  MPI_Reduce(&avg_time, &global_avg_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&min_time, &global_min_time, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  
+  if (myid==0)
+    {
+      std::cout << std::endl;
+      std::cout << "Global average thread time " << global_avg_time/(nthreads*numproc) << std::endl;
+      std::cout << "Global minimum thread time " << global_min_time << std::endl;
+      std::cout << std::endl;
+    }
+
 #endif 
 
+  MPI_Finalize();
 }
 
 
@@ -192,7 +284,9 @@ double check_bounded(const double c_x, const double c_y, const int I_max)
 
 void write_pgm_image( void *image, int maxval, int xsize, int ysize, const char *image_name)
 {
-  FILE* image_file; 
+  FILE* image_file;
+  //  MPI_File image_file;
+  //  MPI_File_open(MPI_COMM_WORLD, image_name, & MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &image_file);
   image_file = fopen(image_name, "w"); 
   
   // Writing header

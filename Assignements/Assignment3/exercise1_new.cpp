@@ -85,14 +85,11 @@ int main(int argc, char* argv[]) {
 
 	
 #pragma omp for schedule(dynamic)
-	for (std::size_t j=0; j<n_y; ++j)
+	for (std::size_t j=0; j<n_x*n_y; ++j)
 	  {
-	    c_y=y_L+j*delta_y;
-	    for (std::size_t k=0; k<n_x; ++k)
-	      {
-		c_x=x_L+k*delta_x;	  
-		Matrix_255[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	      }
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_255[j]=check_bounded(c_x, c_y, I_max);	      
 	  }
 	
 #if defined(_OPENMP)
@@ -120,14 +117,11 @@ int main(int argc, char* argv[]) {
 
       
 #pragma omp for schedule(dynamic)
-	for (std::size_t j=0; j<n_y; ++j)
+	for (std::size_t j=0; j<n_x*n_y; ++j)
 	  {
-	    c_y=y_L+j*delta_y;
-	    for (std::size_t k=0; k<n_x; ++k)
-	      {
-		c_x=x_L+k*delta_x;	  
-		Matrix_65535[k+j*n_x]=check_bounded(c_x, c_y, I_max);
-	      }
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_65535[j]=check_bounded(c_x, c_y, I_max);	      
 	  }
 
 #if defined(_OPENMP)
