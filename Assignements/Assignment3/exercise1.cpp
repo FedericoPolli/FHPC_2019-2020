@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
   }
   else {
     std::cout << "Not enough arguments were given.\n\n";
-    std::cout << "Input should be n_x, n_y, x_L, y_L, x_R, y_R, I_max, where:\n\n";
+    std::cout << "Usage: ./exe n_x, n_y, x_L, y_L, x_R, y_R, I_max, where:\n\n";
     std::cout << "n_x, n_y are the dimensions of the grid of pixels \n\n";
     std::cout << "x_L, y_L, x_R, y_R are the coordinates of the bottom left and top right points \n\n";
     std::cout << "I_max is the number of iterations (less than 65536).\n\n";
@@ -83,6 +83,23 @@ int main(int argc, char* argv[]) {
 	double mystart=CPU_TIME_th;
 #endif
 
+	/* this directive determines which for loop to use. If compiled with -DBALANCED, it will use a more balanced version,
+	   which loops over all pixels, therefore assigning to each thread only one pixel at a time. On the other hand,
+	   in order to keep track of the position of the point in the complex plane more computation need to be done. 
+	   Therefore it is best to use the standard version, especially if I_max=255, unless n_y/numthreads is small.  */ 
+      
+	
+#ifdef BALANCED
+
+#pragma omp for schedule(dynamic)
+	for (std::size_t j=0; j<n_x*n_y; ++j)
+	  {
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_255[j]=check_bounded(c_x, c_y, I_max);	      
+	  }
+
+#else
 	
 #pragma omp for schedule(dynamic)
 	for (std::size_t j=0; j<n_y; ++j)
@@ -94,6 +111,7 @@ int main(int argc, char* argv[]) {
 		Matrix_255[k+j*n_x]=check_bounded(c_x, c_y, I_max);
 	      }
 	  }
+#endif
 	
 #if defined(_OPENMP)
 	avg_time += CPU_TIME_th-mystart;
@@ -102,6 +120,9 @@ int main(int argc, char* argv[]) {
       }
       write_pgm_image(Matrix_255.data(), I_max, n_x, n_y, "image.pgm" );
     }
+
+  
+  // Second case: I_max=65535
   
   else
     {
@@ -117,8 +138,20 @@ int main(int argc, char* argv[]) {
 	struct timespec myts;
 	double mystart=CPU_TIME_th;
 #endif
+	
+	
+#ifdef BALANCED
+	
+#pragma omp for schedule(dynamic)
+	for (std::size_t j=0; j<n_x*n_y; ++j)
+	  {
+	    c_y=y_L+delta_y*(j/n_x);
+	    c_x=x_L+delta_x*(j%n_x);	  
+	    Matrix_65535[j]=check_bounded(c_x, c_y, I_max);	      
+	  }
 
-      
+#else
+	
 #pragma omp for schedule(dynamic)
 	for (std::size_t j=0; j<n_y; ++j)
 	  {
@@ -129,7 +162,8 @@ int main(int argc, char* argv[]) {
 		Matrix_65535[k+j*n_x]=check_bounded(c_x, c_y, I_max);
 	      }
 	  }
-
+#endif
+	
 #if defined(_OPENMP)
 	avg_time += CPU_TIME_th-mystart;
 	min_time = CPU_TIME_th-mystart;

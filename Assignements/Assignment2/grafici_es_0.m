@@ -1,29 +1,17 @@
-serial_time=8.70;
-%parallel_times_touch_first=[9.74, 8.35, 7.92, 7.84, 7.91, 7.94];
-parallel_times_touch_all=[5.5, 3.7, 2.9, 2.7, 2.55, 2.4];
-%speedup_touch_first=serial_time./parallel_times_touch_first
-speedup_touch_all=serial_time./parallel_times_touch_all
-%estimated_serial_part_touch_first=zeros(1, 6);
-%estimated_serial_part_touch_all=zeros(1, 6);
-num_threads=[2, 4, 8, 12, 16, 20];
-%for i=1:6
-  %  estimated_serial_part_touch_first(i)=(1/speedup_touch_first(i)-1/num_threads(i))/(1-1/num_threads(i));
-    %estimated_serial_part_touch_all(i)=(1/speedup_touch_all(i)-1/num_threads(i))/(1-1/num_threads(i));
-%end
-
-%scatter([1, num_threads], [serial_time, parallel_times_touch_first], 'filled')
-
-%scatter([1, num_threads], [serial_time, parallel_times_touch_all], 'filled', 'r')
-
- %scatter(num_threads, speedup_touch_first, 'filled', 'r')
-% hold on
-scatter(num_threads, speedup_touch_all, 'filled', 'b')
+parallel_times=[15.59, 15.33, 16.27, 17.32, 17.33, 17.34];
+average_times=[14.91, 15.33, 16.27, 17.31, 17.30, 17.31];
+num_threads=[1, 2, 4, 8, 16, 20];
 
 
-%estimated_serial_part_touch_first
-%estimated_serial_part_touch_all
- axis([0 20 0 5])
+hold on
+scatter(num_threads, parallel_times, 'filled', 'b')
+scatter(num_threads, average_times, 'filled', 'r')
+
+
+
+axis([0 20 10 30])
  grid on
  xlabel('number of threads')
- ylabel('speedup')
- legend('binary search speedup')
+ ylabel('times (in seconds)')
+ legend('elapsed time', "average threads' time")
+ title('Weak scaling for I_{max} = 65535, with N_{pixel}/N_{thread}=500.000')
