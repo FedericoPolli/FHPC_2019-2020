@@ -1,0 +1,114 @@
+STRONG SCALING
+
+Iterations=255
+pixels 10000x10000
+-1.5 -1.5 1.5 1.5
+
+TIMES
+
+serial: 16.03
+1 thread: 16.06
+2 threads: 8.82
+4 threads: 5.05
+8 threads: 2.84
+16 threads: 1.73
+20 threads: 1.47
+
+AVG THREAD TIMES
+
+1 thread 15.84
+2 threads: 8.26
+4 threads: 4.43
+8 threads: 2.29
+16 threads: 1.14
+20 threads: 0.92
+
+--------------------------------------------------
+
+Iterations=65535
+pixels 1000x1000
+-1.5 -1.5 1.5 1.5
+
+TIMES
+
+serial: 29.79
+2 threads: 15.58
+4 threads: 8.24
+8 threads: 4.33
+16 threads: 2.17
+20 threads: 1.74
+
+AVG THREAD TIMES
+
+2 threads: 15.58
+4 threads: 8.24
+8 threads: 4.32
+16 threads: 2.16
+20 threads: 1.73
+
+---------------------------------------------------
+
+WEAK SCALING
+
+Iteration=255
+-1.5 -1.5 1.5 1.5
+Problem size 100.000.000 pixels
+
+TIMES
+
+1 thread: 16.38
+2 threads: 17.54
+4 threads: 19.08
+8 threads: 22.29
+16 threads: 24.58
+20 threads: 26.62
+
+
+AVG THREAD TIMES
+
+1 thread: 15.82
+2 threads: 16.28
+4 threads: 17.26
+8 threads: 18.36
+16 threads: 18.36
+20 threads: 18.36
+
+-----------------------------------------------------
+
+Iterations=65535
+-1.5 -1.5 1.5 1.5
+Problem size 500.000 pixels
+
+TIMES
+
+1 thread: 15.59
+2 threads: 15.33
+4 threads: 16.27
+8 threads: 17.32
+16 threads: 17.33
+20 threads: 17.34
+
+
+AVG THREAD TIMES
+
+1 thread: 14.91
+2 threads: 15.33
+4 threads: 16.27
+8 threads: 17.31
+16 threads: 17.30
+20 threads: 17.31
+
+
+compilation:
+set OMP_PROC_BIND to TRUE to avoid thread migration
+
+Hybrid: As above and specify --bind-to none
+
+
+HYBRID -------------------------------------------------
+
+1 proc 3.3
+2 proc 3.40
+5 proc 4.49
+10 proc 6.87
+20 proc 8.79

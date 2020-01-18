@@ -1,0 +1,37 @@
+N=2.000.000.000
+touch first times:
+
+serial 12.38 sec
+1 thread 12.48
+--> parallel overhead is
+2 threads 9.74
+4 threads 8.35
+8 threads 7.92
+12 threads 7.84
+16 threads 7.91
+20 threads 7.94
+
+touch by all times:
+
+serial 12.38 sec
+1 thread 12.89
+--> parallel overhead is
+2 threads 6.31
+4 threads 3.32
+8 threads 1.81
+12 threads 1.33
+16 threads 1.21
+20 threads 1.12
+
+search length 20000000
+data length 100000000
+
+binary search times:
+serial 8.70
+1 thread 8.9
+2 threads 5.5
+4 threads 3.7
+8 threads 2.9
+12 threads 2.7
+16 threads 2.6
+20 threads 2.40
